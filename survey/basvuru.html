@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TRIXIMA Anket Başvurusu</title>
+<meta name="description" content="Fason üreticiler için üç ayda bir yapılan TRIXIMA maliyet anketine katılım başvurusu.">
+<meta name="theme-color" content="#3A0D59">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><div class="in"><a href="../"><img src="../assets/logo-white.svg" alt="TRIXIMA"></a><span>Üretici Maliyet Anketi</span></div></header>
+<main>
+  <section id="intro">
+    <h1>Maliyet anketine katılın</h1>
+    <p class="sub">TRIXIMA Üretici Maliyet Anketi, fason üreticilerin maliyet yapısını ve tezgah saat ücretlerini üç ayda bir toplar. Cevaplar yalnızca en az 5 firmanın birleştiği toplu ve anonim istatistiklerde kullanılır; hiçbir firmanın verisi tek başına gösterilmez.</p>
+    <div class="card">
+      <h2>Nasıl işler?</h2>
+      <ol class="steps">
+        <li>Bu formu doldurursunuz.</li>
+        <li>Başvurunuzu inceleriz ve onaylarız.</li>
+        <li>Size özel anket bağlantınız e-postayla gelir. Bu formda verdiğiniz bilgiler ankette dolu gelir.</li>
+        <li>Her çeyrek sonunda kısa bir hatırlatma alırsınız; anket yaklaşık 10 dakika sürer.</li>
+      </ol>
+    </div>
+  </section>
+
+  <form id="apply" class="card" novalidate>
+    <h2>Başvuru formu</h2>
+    <div class="q"><label class="t" for="f_company">Firma unvanı<span class="req">*</span></label>
+      <div class="ctl"><input type="text" id="f_company" maxlength="200" autocomplete="organization"></div><p class="error hidden"></p></div>
+    <div class="q"><label class="t" for="f_province">İl<span class="req">*</span></label>
+      <div class="ctl"><select id="f_province"><option value="">Seçin…</option></select></div><p class="error hidden"></p></div>
+    <div class="q"><label class="t" for="f_district">İlçe<span class="req">*</span></label>
+      <div class="ctl"><select id="f_district" disabled><option value="">Önce ili seçin</option></select></div><p class="error hidden"></p></div>
+    <div class="q"><label class="t" for="f_taxoffice">Vergi dairesi<span class="req">*</span></label>
+      <div class="ctl"><input type="text" id="f_taxoffice" maxlength="100"></div><p class="error hidden"></p></div>
+    <div class="q"><label class="t" for="f_taxno">Vergi numarası<span class="req">*</span></label>
+      <span class="help">10 hane. Şahıs işletmelerinde 11 haneli T.C. kimlik numarası.</span>
+      <div class="ctl"><input type="text" id="f_taxno" inputmode="numeric" maxlength="11" style="max-width:220px"></div><p class="error hidden"></p></div>
+    <div class="q"><label class="t" for="f_name">Yetkili adı soyadı<span class="req">*</span></label>
+      <div class="ctl"><input type="text" id="f_name" maxlength="120" autocomplete="name"></div><p class="error hidden"></p></div>
+    <div class="q"><label class="t" for="f_role">Görevi</label>
+      <div class="ctl"><input type="text" id="f_role" maxlength="120" autocomplete="organization-title"></div><p class="error hidden"></p></div>
+    <div class="q"><label class="t" for="f_email">E-posta<span class="req">*</span></label>
+      <span class="help">Anket bağlantısı bu adrese gönderilir.</span>
+      <div class="ctl"><input type="email" id="f_email" maxlength="200" autocomplete="email"></div><p class="error hidden"></p></div>
+    <div class="q"><label class="t" for="f_phone">Telefon<span class="req">*</span></label>
+      <div class="ctl"><input type="tel" id="f_phone" maxlength="40" autocomplete="tel" style="max-width:260px"></div><p class="error hidden"></p></div>
+    <div class="q"><span class="t" style="font-weight:600">Faaliyet alanlarınız<span class="req">*</span></span>
+      <div class="ctl opts" id="f_acts"></div><p class="error hidden"></p></div>
+    <div class="q"><label class="t" for="f_note">Açıklama</label>
+      <span class="help">İsterseniz eklemek istediğiniz bir not yazın.</span>
+      <div class="ctl"><textarea id="f_note" maxlength="2000" rows="3"></textarea></div></div>
+    <div class="hp" aria-hidden="true"><label for="f_website">Web sitesi</label><input type="text" id="f_website" tabindex="-1" autocomplete="off"></div>
+    <div class="q">
+      <label class="check"><input type="checkbox" id="f_kvkk"><span><a href="metinler.html#aydinlatma" target="_blank" rel="noopener">Aydınlatma metnini</a> okudum ve anladım. <span class="muted">(zorunlu)</span></span></label>
+      <p class="error hidden"></p>
+    </div>
+    <div class="actions"><button class="btn" type="submit" id="sendBtn">Başvuruyu gönder</button><span class="muted" id="status"></span></div>
+    <p class="error hidden" id="formErr"></p>
+  </form>
+
+  <section id="done" class="card hidden">
+    <h2>Başvurunuz alındı</h2>
+    <p>Teşekkür ederiz. Başvurunuzu inceledikten sonra size özel anket bağlantınızı <strong id="doneMail"></strong> adresine göndereceğiz.</p>
+  </section>
+</main>
+<footer>&copy; 2026 TRIXIMA · <a href="metinler.html">Aydınlatma ve gizlilik metinleri</a> · survey@trixima.com</footer>
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var cat = null;
+
+  function setErr(id, text) {
+    var q = $(id).closest(".q"), e = q.querySelector(".error");
+    e.textContent = text || ""; e.classList.toggle("hidden", !text); q.classList.toggle("bad", !!text);
+    return !text;
+  }
+
+  function fillDistricts() {
+    var d = $("f_district"), p = $("f_province").value;
+    while (d.options.length) d.remove(0);
+    d.appendChild(TRX.el("option", { value: "" }, p ? "Seçin…" : "Önce ili seçin"));
+    ((cat && cat.districts && cat.districts[p]) || []).forEach(function (x) { d.appendChild(TRX.el("option", { value: x }, x)); });
+    d.disabled = !p;
+  }
+
+  TRX.rpc("survey_catalog").then(function (c) {
+    cat = c;
+    c.provinces.forEach(function (o) { $("f_province").appendChild(TRX.el("option", { value: o.value }, o.label_tr)); });
+    c.activities.forEach(function (o) {
+      var l = TRX.el("label"); l.appendChild(TRX.el("input", { type: "checkbox", name: "act", value: o.value }));
+      l.appendChild(document.createTextNode(" " + o.label_tr)); $("f_acts").appendChild(l);
+    });
+  }).catch(function (e) { $("formErr").textContent = TRX.msg(e); $("formErr").classList.remove("hidden"); $("sendBtn").disabled = true; });
+
+  $("f_province").addEventListener("change", fillDistricts);
+
+  $("apply").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    $("formErr").classList.add("hidden");
+    var v = function (id) { return $(id).value.trim(); };
+    var acts = [].map.call(document.querySelectorAll("input[name=act]:checked"), function (i) { return i.value; });
+    var tax = v("f_taxno").replace(/\s/g, "");
+    var ok = [
+      setErr("f_company", v("f_company") ? "" : "Firma unvanını yazın."),
+      setErr("f_province", v("f_province") ? "" : "İl seçin."),
+      setErr("f_district", v("f_district") ? "" : "İlçe seçin."),
+      setErr("f_taxoffice", v("f_taxoffice") ? "" : "Vergi dairesini yazın."),
+      setErr("f_taxno", /^[0-9]{10,11}$/.test(tax) ? "" : "Vergi numarası 10 veya 11 rakam olmalı."),
+      setErr("f_name", v("f_name") ? "" : "Yetkilinin adını yazın."),
+      setErr("f_email", /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v("f_email")) ? "" : "Geçerli bir e-posta adresi yazın."),
+      setErr("f_phone", v("f_phone").replace(/\D/g, "").length >= 10 ? "" : "Telefon numarasını alan koduyla yazın."),
+      setErr("f_acts", acts.length ? "" : "En az bir faaliyet alanı seçin."),
+      setErr("f_kvkk", $("f_kvkk").checked ? "" : "Devam etmek için aydınlatma metnini okuduğunuzu onaylayın.")
+    ].every(Boolean);
+    if (!ok) { document.querySelector(".q.bad").scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+    $("sendBtn").disabled = true; $("status").textContent = "Gönderiliyor…";
+    TRX.rpc("survey_apply", { p: {
+      company_name: v("f_company"), province: v("f_province"), district: v("f_district"),
+      tax_office: v("f_taxoffice"), tax_number: tax, contact_name: v("f_name"), contact_role: v("f_role"),
+      email: v("f_email"), phone: v("f_phone"), activities: acts, note: v("f_note"),
+      aydinlatma: $("f_kvkk").checked, website: $("f_website").value
+    }, p_user_agent: navigator.userAgent }).then(function () {
+      $("doneMail").textContent = v("f_email");
+      $("apply").classList.add("hidden"); $("intro").classList.add("hidden"); $("done").classList.remove("hidden");
+      window.scrollTo(0, 0);
+    }).catch(function (e) {
+      $("formErr").textContent = TRX.msg(e); $("formErr").classList.remove("hidden");
+    }).then(function () { $("sendBtn").disabled = false; $("status").textContent = ""; });
+  });
+})();
+</script>
+</body>
+</html>

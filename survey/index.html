@@ -38,8 +38,11 @@
   <section id="survey" class="hidden">
     <h1 id="title"></h1>
     <p class="sub" id="periodText"></p>
+    <div class="note" id="quarterNote"></div>
+    <div class="warn hidden" id="lateNote"></div>
     <div class="note hidden" id="againNote">Bu dönem için cevabınız alındı. Değiştirmek isterseniz düzeltip yeniden gönderebilirsiniz; son gönderiminiz geçerli olur.</div>
     <div class="note hidden" id="prevNote">Önceki dönemdeki cevaplarınız dolduruldu. Değişen yerleri düzeltmeniz yeterli.</div>
+    <div class="note hidden" id="appNote">Başvurunuzda verdiğiniz il, ilçe ve faaliyet alanları dolduruldu. Lütfen kontrol edip diğer soruları cevaplayın.</div>
     <form id="form" novalidate>
       <div class="card" data-sec="A">
         <h2>A. Firma bilgileri</h2>
@@ -85,13 +88,14 @@
 </main>
 <footer>&copy; 2026 TRIXIMA · <a href="metinler.html">Aydınlatma ve gizlilik metinleri</a> · <a href="mailto:survey@trixima.com">survey@trixima.com</a></footer>
 
+<script src="config.js"></script>
 <script>
 (function () {
   "use strict";
   // Public settings. The publishable (anon) key is safe to ship in a web page:
   // it can only call the three survey_* functions, nothing else.
-  var SUPABASE_URL = "https://retiqmigkbhmserxfapa.supabase.co";
-  var SUPABASE_KEY = "__SUPABASE_PUBLISHABLE_KEY__";
+  var SUPABASE_URL = window.TRX_CONFIG.url;
+  var SUPABASE_KEY = window.TRX_CONFIG.key;
 
   var $ = function (id) { return document.getElementById(id); };
   var data = null;
@@ -298,9 +302,12 @@
   function applyShowIf() {
     data.questions.forEach(function (q) {
       if (!q.show_if) return;
-      var a = answerOf(q.show_if.item);
-      var val = a && (a.text || (a.list && a.list[0]));
-      var visible = !!val && q.show_if["in"].indexOf(val) >= 0;
+      var conds = q.show_if.any || [q.show_if];
+      var visible = conds.some(function (c) {
+        var a = answerOf(c.item);
+        var vals = a ? (a.list || (a.text != null ? [a.text] : [])) : [];
+        return vals.some(function (v) { return c["in"].indexOf(v) >= 0; });
+      });
       document.querySelector('.q[data-item="' + q.item_code + '"]').classList.toggle("hidden", !visible);
     });
     document.querySelectorAll("#form .grp").forEach(function (g) {
@@ -335,7 +342,19 @@
   function setupSurvey() {
     var p = data.period;
     $("title").textContent = data.company_name;
-    $("periodText").textContent = "Dönem: " + fmtDate(p.covers_from) + " – " + fmtDate(p.covers_to) + " (son 3 ay). Son gönderim tarihi: " + fmtDate(p.closes_on) + ".";
+    var months = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+    var qName = months[parseInt(p.covers_from.split("-")[1], 10) - 1] + " – " + months[parseInt(p.covers_to.split("-")[1], 10) - 1] + " " + p.covers_to.split("-")[0];
+    var mainClose = p.main_closes_on || p.closes_on;
+    $("periodText").textContent = p.late ? "Son gönderim tarihi: " + fmtDate(p.closes_on) + "." : "Cevaplarınızı " + fmtDate(mainClose) + " tarihine kadar bekliyoruz.";
+    $("quarterNote").innerHTML = "";
+    $("quarterNote").appendChild(document.createTextNode("Bu anketi "));
+    $("quarterNote").appendChild(el("strong", null, qName));
+    $("quarterNote").appendChild(document.createTextNode(" çeyreğindeki (" + fmtDate(p.covers_from) + " – " + fmtDate(p.covers_to) + ") harcamalarınızı dikkate alarak doldurun. Oranları bu 3 ayın toplamına göre verin."));
+    $("lateNote").classList.toggle("hidden", !p.late);
+    if (p.late) {
+      $("lateNote").textContent = "Bu dönemin toplama süresi " + fmtDate(mainClose) + " tarihinde bitti, ancak cevabınızı " + fmtDate(p.closes_on) +
+        " tarihine kadar kabul ediyoruz. Bugünün değil, " + qName + " çeyreğinin harcamalarını yazmanız önemli; aksi halde diğer firmalarla karşılaştırılamaz.";
+    }
     $("againNote").classList.toggle("hidden", !data.submitted_this_period);
 
     var form = $("form");
@@ -369,7 +388,8 @@
       if (prev.shares_rates != null) {
         form.querySelector('input[name=shares_rates][value=' + (prev.shares_rates ? "yes" : "no") + ']').checked = true;
       }
-      $("prevNote").classList.toggle("hidden", data.submitted_this_period || prev.period_code === p.code);
+      $("prevNote").classList.toggle("hidden", !!prev.from_application || data.submitted_this_period || prev.period_code === p.code);
+      $("appNote").classList.toggle("hidden", !prev.from_application);
     }
     var toggleRates = function () { $("rateQs").classList.toggle("hidden", sharesRates() !== true); };
     form.querySelectorAll("input[name=shares_rates]").forEach(function (i) { i.onchange = toggleRates; });
