@@ -34,11 +34,6 @@
       <div class="ctl"><select id="f_province"><option value="">Seçin…</option></select></div><p class="error hidden"></p></div>
     <div class="q"><label class="t" for="f_district">İlçe<span class="req">*</span></label>
       <div class="ctl"><select id="f_district" disabled><option value="">Önce ili seçin</option></select></div><p class="error hidden"></p></div>
-    <div class="q"><label class="t" for="f_taxoffice">Vergi dairesi<span class="req">*</span></label>
-      <div class="ctl"><input type="text" id="f_taxoffice" maxlength="100"></div><p class="error hidden"></p></div>
-    <div class="q"><label class="t" for="f_taxno">Vergi numarası<span class="req">*</span></label>
-      <span class="help">10 hane. Şahıs işletmelerinde 11 haneli T.C. kimlik numarası.</span>
-      <div class="ctl"><input type="text" id="f_taxno" inputmode="numeric" maxlength="11" style="max-width:220px"></div><p class="error hidden"></p></div>
     <div class="q"><label class="t" for="f_name">Yetkili adı soyadı<span class="req">*</span></label>
       <div class="ctl"><input type="text" id="f_name" maxlength="120" autocomplete="name"></div><p class="error hidden"></p></div>
     <div class="q"><label class="t" for="f_role">Görevi</label>
@@ -106,13 +101,10 @@
     $("formErr").classList.add("hidden");
     var v = function (id) { return $(id).value.trim(); };
     var acts = [].map.call(document.querySelectorAll("input[name=act]:checked"), function (i) { return i.value; });
-    var tax = v("f_taxno").replace(/\s/g, "");
     var ok = [
       setErr("f_company", v("f_company") ? "" : "Firma unvanını yazın."),
       setErr("f_province", v("f_province") ? "" : "İl seçin."),
       setErr("f_district", v("f_district") ? "" : "İlçe seçin."),
-      setErr("f_taxoffice", v("f_taxoffice") ? "" : "Vergi dairesini yazın."),
-      setErr("f_taxno", /^[0-9]{10,11}$/.test(tax) ? "" : "Vergi numarası 10 veya 11 rakam olmalı."),
       setErr("f_name", v("f_name") ? "" : "Yetkilinin adını yazın."),
       setErr("f_email", /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v("f_email")) ? "" : "Geçerli bir e-posta adresi yazın."),
       setErr("f_phone", v("f_phone").replace(/\D/g, "").length >= 10 ? "" : "Telefon numarasını alan koduyla yazın."),
@@ -123,7 +115,7 @@
     $("sendBtn").disabled = true; $("status").textContent = "Gönderiliyor…";
     TRX.rpc("survey_apply", { p: {
       company_name: v("f_company"), province: v("f_province"), district: v("f_district"),
-      tax_office: v("f_taxoffice"), tax_number: tax, contact_name: v("f_name"), contact_role: v("f_role"),
+      contact_name: v("f_name"), contact_role: v("f_role"),
       email: v("f_email"), phone: v("f_phone"), activities: acts, note: v("f_note"),
       aydinlatma: $("f_kvkk").checked, website: $("f_website").value
     }, p_user_agent: navigator.userAgent }).then(function () {
