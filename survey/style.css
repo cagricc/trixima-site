@@ -51,3 +51,7 @@ a{color:var(--purple)}
 .legal td,.legal th{border:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}
 .version{font-size:.85rem;color:var(--slate)}
 .q .ctl > select{max-width:360px}
+.grp{border-left:3px solid var(--teal);padding:2px 0 2px 14px;margin:18px 0 6px}
+.grp-title{font-weight:700;color:var(--purple);font-size:.95rem;letter-spacing:.01em}
+.grp-help{color:var(--slate);font-size:.88rem;margin:4px 0 0}
+.grp-title + .q,.grp-help + .q{border-top:0}
