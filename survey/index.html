@@ -206,6 +206,15 @@
       ["TRY", "EUR", "USD"].forEach(function (c) { sel.appendChild(el("option", { value: c }, c === "TRY" ? "TL" : c)); });
       ctl.appendChild(sel);
       ctl.appendChild(el("span", { "class": "unit" }, "/ saat, KDV hariç"));
+    } else if (k === "select") {
+      var sl = el("select", { id: id });
+      sl.appendChild(el("option", { value: "" }, "Seçin…"));
+      if (Array.isArray(q.options)) {
+        q.options.forEach(function (o) { sl.appendChild(el("option", { value: o.value }, o.label_tr)); });
+      } else if (q.options && q.options.depends_on) {
+        sl.setAttribute("data-depends", q.options.depends_on);
+      }
+      ctl.appendChild(sl);
     } else if (k === "month") {
       ctl.appendChild(el("input", { type: "month", id: id }));
     } else if (k === "text") {
@@ -236,6 +245,10 @@
       if (v.min != null) wrap.querySelector('[data-part=min]').value = v.min;
       if (v.max != null) wrap.querySelector('[data-part=max]').value = v.max;
       if (v.currency) wrap.querySelector('[data-part=currency]').value = v.currency;
+    } else if (k === "select") {
+      var sf = wrap.querySelector("select");
+      sf.setAttribute("data-pending", v.text || "");
+      sf.value = v.text || "";
     } else if (k === "month" || k === "text") {
       wrap.querySelector("input,textarea").value = v.text || "";
     } else if (v.num != null) {
@@ -265,6 +278,10 @@
       if (mn == null && mx == null) return null;
       return { min: mn, max: mx, currency: wrap.querySelector('[data-part=currency]').value };
     }
+    if (k === "select") {
+      var sv = wrap.querySelector("select").value;
+      return sv ? { text: sv } : null;
+    }
     if (k === "month" || k === "text") {
       var t = wrap.querySelector("input,textarea").value.trim();
       return t ? { text: t } : null;
@@ -285,6 +302,25 @@
       var val = a && (a.text || (a.list && a.list[0]));
       var visible = !!val && q.show_if["in"].indexOf(val) >= 0;
       document.querySelector('.q[data-item="' + q.item_code + '"]').classList.toggle("hidden", !visible);
+    });
+  }
+
+  // Fill dependent lists (district list follows the chosen province).
+  function refreshDependents() {
+    document.querySelectorAll("#form select[data-depends]").forEach(function (sel) {
+      var code = sel.id.replace(/^q_/, "");
+      var q = data.questions.filter(function (x) { return x.item_code === code; })[0];
+      var parent = answerOf(sel.getAttribute("data-depends"));
+      var key = parent && parent.text;
+      if (sel.getAttribute("data-for") === (key || "")) return;
+      var keep = sel.getAttribute("data-pending") || sel.value;
+      sel.setAttribute("data-for", key || "");
+      while (sel.options.length > 1) sel.remove(1);
+      var list = (key && q.options.map[key]) || [];
+      list.forEach(function (d) { sel.appendChild(el("option", { value: d }, d)); });
+      sel.disabled = !key;
+      sel.value = list.indexOf(keep) >= 0 ? keep : "";
+      sel.removeAttribute("data-pending");
     });
   }
 
@@ -320,7 +356,8 @@
     var toggleRates = function () { $("rateQs").classList.toggle("hidden", sharesRates() !== true); };
     form.querySelectorAll("input[name=shares_rates]").forEach(function (i) { i.onchange = toggleRates; });
     toggleRates();
-    form.addEventListener("change", applyShowIf);
+    form.addEventListener("change", function () { refreshDependents(); applyShowIf(); });
+    refreshDependents();
     applyShowIf();
     show("survey");
   }

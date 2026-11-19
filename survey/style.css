@@ -50,3 +50,4 @@ a{color:var(--purple)}
 .legal table{border-collapse:collapse;width:100%;margin:10px 0}
 .legal td,.legal th{border:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}
 .version{font-size:.85rem;color:var(--slate)}
+.q .ctl > select{max-width:360px}
