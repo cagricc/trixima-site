@@ -48,7 +48,7 @@
       </div>
       <div class="card" data-sec="B">
         <h2>B. Maliyet kalemleri</h2>
-        <p class="muted">Son 3 ayda mavi yaka işçilik maliyetinizi (brüt ücret, SGK işveren payı ve fazla mesai dahil) <strong>100</strong> kabul edin. Aşağıdaki giderler aynı dönemde bunun yanında ne kadar tuttu? Örnek: elektrik faturanız işçiliğin yarısı kadarsa 50 yazın. Bilmediğiniz kalemleri boş bırakabilirsiniz.</p>
+        <p class="muted">Son 3 ayda mavi yaka işçilik maliyetinizi (brüt ücret, SGK işveren payı ve fazla mesai dahil) <strong>100</strong> kabul edin. Aşağıdaki giderler aynı dönemde bunun yanında ne kadar tuttu? Örnek: elektrik faturanız işçiliğin yarısı kadarsa 50 yazın. Tutar sormuyoruz, yalnızca oran. Kalemler gelir tablonuzdaki gider hesaplarının sırasıyla gruplandı; aynı hesaba giren kalemler bir çizgiyle birlikte gösterilir. Bilmediğiniz kalemleri boş bırakabilirsiniz.</p>
         <div class="qs"></div>
       </div>
       <div class="card" data-sec="C">
@@ -303,6 +303,9 @@
       var visible = !!val && q.show_if["in"].indexOf(val) >= 0;
       document.querySelector('.q[data-item="' + q.item_code + '"]').classList.toggle("hidden", !visible);
     });
+    document.querySelectorAll("#form .grp").forEach(function (g) {
+      g.classList.toggle("hidden", !g.querySelector(".q:not(.hidden)"));
+    });
   }
 
   // Fill dependent lists (district list follows the chosen province).
@@ -337,9 +340,24 @@
 
     var form = $("form");
     form.querySelectorAll(".qs").forEach(function (q) { q.innerHTML = ""; });
+    var groupBox = null, groupKey = null;
     data.questions.forEach(function (q) {
       var target = q.section === "C" ? $("rateQs") : form.querySelector('[data-sec="' + q.section + '"] .qs');
-      if (target) target.appendChild(buildQuestion(q));
+      if (!target) return;
+      var g = q.options && !Array.isArray(q.options) && q.options.group;
+      if (g) {
+        if (q.section + g !== groupKey) {
+          groupKey = q.section + g;
+          groupBox = el("div", { "class": "grp", "data-group": g });
+          groupBox.appendChild(el("div", { "class": "grp-title" }, q.options.group_label || g));
+          if (q.options.group_help) groupBox.appendChild(el("p", { "class": "grp-help" }, q.options.group_help));
+          target.appendChild(groupBox);
+        }
+        groupBox.appendChild(buildQuestion(q));
+      } else {
+        groupKey = null;
+        target.appendChild(buildQuestion(q));
+      }
     });
 
     var prev = data.previous;
