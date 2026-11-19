@@ -5,7 +5,6 @@ window.TRX = (function () {
     invalid_link: "Bu bağlantı geçersiz ya da artık kullanılmıyor.",
     required_consent_missing: "Devam etmek için aydınlatma metnini okuduğunuzu onaylamanız gerekiyor.",
     missing_field: "Zorunlu alanlardan biri boş kaldı.",
-    bad_tax_number: "Vergi numarası 10 haneli (şahıs işletmelerinde 11 haneli) olmalı.",
     bad_location: "İl ve ilçe seçimini kontrol edin.",
     too_many_applications: "Bu bağlantıdan bugün çok sayıda başvuru yapıldı. Lütfen yarın tekrar deneyin veya survey@trixima.com adresine yazın.",
     network: "Sunucuya ulaşılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.",

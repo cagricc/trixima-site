@@ -57,7 +57,7 @@
   function render(a) {
     $("title").textContent = a.company_name;
     $("when").textContent = "Başvuru tarihi: " + new Date(a.created_at).toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" });
-    var rows = [["İl / ilçe", a.province + " / " + a.district], ["Vergi dairesi", a.tax_office], ["Vergi no", a.tax_number],
+    var rows = [["İl / ilçe", a.province + " / " + a.district],
       ["Yetkili", a.contact_name + (a.contact_role ? " (" + a.contact_role + ")" : "")], ["E-posta", a.email], ["Telefon", a.phone],
       ["Faaliyet alanları", (a.activities || []).map(function (x) { return LABELS[x] || x; }).join(", ")], ["Açıklama", a.note || "-"]];
     var t = $("details"); t.innerHTML = "";
