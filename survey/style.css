@@ -55,3 +55,11 @@ a{color:var(--purple)}
 .grp-title{font-weight:700;color:var(--purple);font-size:.95rem;letter-spacing:.01em}
 .grp-help{color:var(--slate);font-size:.88rem;margin:4px 0 0}
 .grp-title + .q,.grp-help + .q{border-top:0}
+.steps{margin:6px 0 0;padding-left:22px;display:grid;gap:6px}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+table.kv{border-collapse:collapse;width:100%}
+table.kv th{text-align:left;font-weight:600;color:var(--slate);padding:6px 12px 6px 0;vertical-align:top;width:38%}
+table.kv td{padding:6px 0;overflow-wrap:anywhere}
+header.top a{display:block}
+.survey-cta{margin-top:18px;font-size:.95rem;color:var(--slate)}
+.survey-cta a{color:var(--purple);font-weight:600}

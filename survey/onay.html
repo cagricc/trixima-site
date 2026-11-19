@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>TRIXIMA Başvuru Onayı</title>
+<meta name="theme-color" content="#3A0D59">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><div class="in"><img src="../assets/logo-white.svg" alt="TRIXIMA"><span>Başvuru onayı</span></div></header>
+<main>
+  <div id="loading" class="card"><p class="muted">Yükleniyor…</p></div>
+  <div id="fail" class="card hidden"><h2>Başvuru açılamadı</h2><p id="failText"></p></div>
+  <section id="view" class="hidden">
+    <h1 id="title"></h1>
+    <p class="sub" id="when"></p>
+    <div class="card"><table class="kv" id="details"></table></div>
+    <div class="warn hidden" id="stateNote"></div>
+    <div class="actions" id="actions">
+      <button class="btn" type="button" id="approve">Onayla ve ankete dahil et</button>
+      <button class="btn ghost" type="button" id="reject">Reddet</button>
+    </div>
+    <div class="card hidden" id="confirmReject">
+      <p>Başvuruyu reddetmek istediğinize emin misiniz? Firmaya otomatik e-posta gitmez.</p>
+      <div class="actions"><button class="btn" type="button" id="rejectYes">Evet, reddet</button><button class="btn ghost" type="button" id="rejectNo">Vazgeç</button></div>
+    </div>
+    <p class="error hidden" id="err"></p>
+  </section>
+</main>
+<footer>&copy; 2026 TRIXIMA</footer>
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var m = location.hash.match(/k=([0-9a-fA-F-]{36})/);
+  var key = m ? m[1].toLowerCase() : null;
+  var LABELS = { talasli: "Talaşlı imalat", pres: "Pres", kaynak: "Kaynak", montaj: "Montaj", boya_kaplama: "Boya ve kaplama", diger: "Diğer", sac: "Sac işleme" };
+
+  function show(id) { ["loading", "fail", "view"].forEach(function (s) { $(s).classList.toggle("hidden", s !== id); }); }
+  function fail(e) { $("failText").textContent = TRX.msg(e); show("fail"); }
+
+  function state(a) {
+    var done = a.status !== "pending";
+    $("actions").classList.toggle("hidden", done);
+    $("confirmReject").classList.add("hidden");
+    $("stateNote").classList.toggle("hidden", !done);
+    if (a.status === "approved") $("stateNote").textContent = "Onaylandı. Katılımcı kodu " + a.participant_code + ". Davet e-postası en geç bir saat içinde gider.";
+    if (a.status === "rejected") $("stateNote").textContent = "Bu başvuru reddedildi.";
+  }
+
+  function render(a) {
+    $("title").textContent = a.company_name;
+    $("when").textContent = "Başvuru tarihi: " + new Date(a.created_at).toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" });
+    var rows = [["İl / ilçe", a.province + " / " + a.district], ["Vergi dairesi", a.tax_office], ["Vergi no", a.tax_number],
+      ["Yetkili", a.contact_name + (a.contact_role ? " (" + a.contact_role + ")" : "")], ["E-posta", a.email], ["Telefon", a.phone],
+      ["Faaliyet alanları", (a.activities || []).map(function (x) { return LABELS[x] || x; }).join(", ")], ["Açıklama", a.note || "-"]];
+    var t = $("details"); t.innerHTML = "";
+    rows.forEach(function (r) { var tr = TRX.el("tr"); tr.appendChild(TRX.el("th", null, r[0])); tr.appendChild(TRX.el("td", null, r[1])); t.appendChild(tr); });
+    state(a);
+    show("view");
+  }
+
+  function review(ok) {
+    $("err").classList.add("hidden");
+    $("approve").disabled = $("rejectYes").disabled = true;
+    TRX.rpc("survey_review", { p_review_token: key, p_approve: ok }).then(function (r) {
+      state({ status: r.status, participant_code: r.participant_code });
+    }).catch(function (e) { $("err").textContent = TRX.msg(e); $("err").classList.remove("hidden"); })
+      .then(function () { $("approve").disabled = $("rejectYes").disabled = false; });
+  }
+
+  $("approve").onclick = function () { review(true); };
+  $("reject").onclick = function () { $("confirmReject").classList.remove("hidden"); };
+  $("rejectNo").onclick = function () { $("confirmReject").classList.add("hidden"); };
+  $("rejectYes").onclick = function () { review(false); };
+
+  if (!key) fail(new Error("invalid_link"));
+  else TRX.rpc("survey_application", { p_review_token: key }).then(function (a) {
+    if (!a) throw new Error("invalid_link");
+    render(a);
+  }).catch(fail);
+})();
+</script>
+</body>
+</html>
