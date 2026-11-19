@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>TRIXIMA Maliyet Anketi</title>
+<meta name="theme-color" content="#3A0D59">
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><div class="in"><img src="../assets/logo-white.svg" alt="TRIXIMA"><span>Üretici Maliyet Anketi</span></div></header>
+<main>
+  <div id="loading" class="card"><p class="muted">Yükleniyor…</p></div>
+
+  <div id="fail" class="card hidden">
+    <h2>Anket açılamadı</h2>
+    <p id="failText"></p>
+    <p class="muted">Sorun devam ederse <a href="mailto:survey@trixima.com">survey@trixima.com</a> adresine yazabilirsiniz.</p>
+  </div>
+
+  <section id="consent" class="hidden">
+    <h1 id="hello"></h1>
+    <p class="sub">Ankete başlamadan önce aşağıdaki metinleri okuyup onaylamanız gerekiyor. Onayınız bir kez alınır; metin değişmedikçe tekrar sorulmaz.</p>
+    <div class="card">
+      <label class="check"><input type="checkbox" id="c_aydinlatma"><span><a href="metinler.html#aydinlatma" target="_blank" rel="noopener">Aydınlatma metnini</a> okudum ve anladım. <span class="muted">(zorunlu)</span></span></label>
+      <p></p>
+      <label class="check"><input type="checkbox" id="c_gizlilik"><span><a href="metinler.html#gizlilik" target="_blank" rel="noopener">Gizlilik taahhütnamesini</a> okudum. <span class="muted">(zorunlu)</span></span></label>
+      <p></p>
+      <label class="check"><input type="checkbox" id="c_acik_riza"><span><a href="metinler.html#acik-riza" target="_blank" rel="noopener">Açık rıza beyanını</a> onaylıyorum. <span class="muted">(isteğe bağlı)</span></span></label>
+      <div class="actions"><button class="btn" id="consentBtn" disabled>Onayla ve devam et</button></div>
+      <p class="error hidden" id="consentErr"></p>
+    </div>
+  </section>
+
+  <section id="survey" class="hidden">
+    <h1 id="title"></h1>
+    <p class="sub" id="periodText"></p>
+    <div class="note hidden" id="againNote">Bu dönem için cevabınız alındı. Değiştirmek isterseniz düzeltip yeniden gönderebilirsiniz; son gönderiminiz geçerli olur.</div>
+    <div class="note hidden" id="prevNote">Önceki dönemdeki cevaplarınız dolduruldu. Değişen yerleri düzeltmeniz yeterli.</div>
+    <form id="form" novalidate>
+      <div class="card" data-sec="A">
+        <h2>A. Firma bilgileri</h2>
+        <p class="muted">Firma adı ve iletişim bilgileriniz kayıtlıdır; burada sorulmaz.</p>
+        <div class="qs"></div>
+      </div>
+      <div class="card" data-sec="B">
+        <h2>B. Maliyet kalemleri</h2>
+        <p class="muted">Son 3 ayda mavi yaka işçilik maliyetinizi (brüt ücret, SGK işveren payı ve fazla mesai dahil) <strong>100</strong> kabul edin. Aşağıdaki giderler aynı dönemde bunun yanında ne kadar tuttu? Örnek: elektrik faturanız işçiliğin yarısı kadarsa 50 yazın. Bilmediğiniz kalemleri boş bırakabilirsiniz.</p>
+        <div class="qs"></div>
+      </div>
+      <div class="card" data-sec="C">
+        <h2>C. Tezgah ve proses saat ücretleri</h2>
+        <p class="muted">Müşterilerinize uyguladığınız satış saat ücretleri. Yalnızca toplu ve anonim istatistiklerde kullanılır.</p>
+        <div class="q">
+          <span class="t" style="font-weight:600">Tezgah saat ücretlerinizi paylaşmak ister misiniz?</span>
+          <div class="ctl opts">
+            <label><input type="radio" name="shares_rates" value="yes"> Evet</label>
+            <label><input type="radio" name="shares_rates" value="no"> Hayır</label>
+          </div>
+        </div>
+        <div class="qs hidden" id="rateQs"></div>
+      </div>
+      <div class="card" data-sec="D">
+        <h2>D. Beklentiler</h2>
+        <div class="qs"></div>
+      </div>
+      <div class="actions">
+        <button class="btn" type="submit" id="sendBtn">Gönder</button>
+        <span class="muted" id="sendStatus"></span>
+      </div>
+      <p class="error hidden" id="formErr"></p>
+    </form>
+  </section>
+
+  <section id="done" class="hidden">
+    <div class="card">
+      <h2>Teşekkürler</h2>
+      <p>Cevaplarınız kaydedildi. Bir sonraki dönemde aynı bağlantıyla, bu cevaplar dolu olarak size tekrar ulaşacağız.</p>
+      <div class="actions"><button class="btn ghost" id="editAgain">Cevaplarımı düzelt</button></div>
+    </div>
+  </section>
+</main>
+<footer>&copy; 2026 TRIXIMA · <a href="metinler.html">Aydınlatma ve gizlilik metinleri</a> · <a href="mailto:survey@trixima.com">survey@trixima.com</a></footer>
+
+<script>
+(function () {
+  "use strict";
+  // Public settings. The publishable (anon) key is safe to ship in a web page:
+  // it can only call the three survey_* functions, nothing else.
+  var SUPABASE_URL = "https://retiqmigkbhmserxfapa.supabase.co";
+  var SUPABASE_KEY = "__SUPABASE_PUBLISHABLE_KEY__";
+
+  var $ = function (id) { return document.getElementById(id); };
+  var data = null;
+  var token = null;
+
+  var MESSAGES = {
+    invalid_link: "Bu bağlantı geçersiz ya da artık kullanılmıyor.",
+    no_open_period: "Şu anda açık bir anket dönemi yok.",
+    consent_required: "Devam etmek için zorunlu metinleri onaylamanız gerekiyor.",
+    required_consent_missing: "Aydınlatma metni ve gizlilik taahhütnamesi onaylanmalı.",
+    network: "Sunucuya ulaşılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.",
+    not_configured: "Anket sistemi henüz yayında değil."
+  };
+
+  function readToken() {
+    var m = (location.hash + "&" + location.search).match(/[#?&]t=([0-9a-fA-F-]{36})/);
+    return m ? m[1].toLowerCase() : null;
+  }
+
+  function rpc(name, body) {
+    if (SUPABASE_KEY.indexOf("__") === 0) return Promise.reject(new Error("not_configured"));
+    return fetch(SUPABASE_URL + "/rest/v1/rpc/" + name, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY },
+      body: JSON.stringify(body)
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok) throw new Error((j && j.message) || ("http_" + r.status));
+        return j;
+      });
+    }, function () { throw new Error("network"); });
+  }
+
+  function msg(e) {
+    var k = (e && e.message) || "";
+    var base = k.split(" ")[0];
+    if (MESSAGES[base]) return MESSAGES[base];
+    if (/check constraint/.test(k)) return "Bazı değerler geçersiz (negatif sayı ya da en düşük değer en yüksekten büyük). Lütfen kontrol edin.";
+    return "Beklenmeyen bir hata oluştu (" + k + ").";
+  }
+
+  function show(id) {
+    ["loading", "fail", "consent", "survey", "done"].forEach(function (s) { $(s).classList.toggle("hidden", s !== id); });
+    window.scrollTo(0, 0);
+  }
+
+  function fail(e) { $("failText").textContent = msg(e); show("fail"); }
+
+  function fmtDate(iso) {
+    var p = iso.split("-");
+    var months = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+    return parseInt(p[2], 10) + " " + months[parseInt(p[1], 10) - 1] + " " + p[0];
+  }
+
+  // ---------- consent ----------
+  function needsConsent() {
+    return data.documents.some(function (d) { return d.required && d.accepted !== true; });
+  }
+
+  function setupConsent() {
+    $("hello").textContent = "Merhaba " + (data.contact_name || "");
+    var ay = $("c_aydinlatma"), gz = $("c_gizlilik"), ar = $("c_acik_riza"), btn = $("consentBtn");
+    var sync = function () { btn.disabled = !(ay.checked && gz.checked); };
+    ay.onchange = gz.onchange = sync;
+    btn.onclick = function () {
+      btn.disabled = true;
+      $("consentErr").classList.add("hidden");
+      rpc("survey_consent", { p_token: token, p_aydinlatma: ay.checked, p_gizlilik: gz.checked, p_acik_riza: ar.checked, p_user_agent: navigator.userAgent })
+        .then(load)
+        .catch(function (e) { $("consentErr").textContent = msg(e); $("consentErr").classList.remove("hidden"); sync(); });
+    };
+    show("consent");
+  }
+
+  // ---------- form ----------
+  function el(tag, attrs, text) {
+    var n = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) { n.setAttribute(k, attrs[k]); });
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  function buildQuestion(q) {
+    var id = "q_" + q.item_code;
+    var wrap = el("div", { "class": "q", "data-item": q.item_code, "data-kind": q.kind });
+    var label = el("label", { "class": "t", "for": id }, q.label);
+    if (q.required) label.appendChild(el("span", { "class": "req", title: "zorunlu" }, "*"));
+    wrap.appendChild(label);
+    if (q.help) wrap.appendChild(el("span", { "class": "help" }, q.help));
+    var ctl = el("div", { "class": "ctl" });
+    var k = q.kind;
+    if (k === "choice" || k === "multi") {
+      ctl.className = "ctl opts";
+      (q.options || []).forEach(function (o) {
+        var l = el("label");
+        var i = el("input", { type: k === "choice" ? "radio" : "checkbox", name: id, value: o.value });
+        l.appendChild(i);
+        l.appendChild(document.createTextNode(" " + o.label_tr));
+        ctl.appendChild(l);
+      });
+    } else if (k === "flag") {
+      var l2 = el("label", { "class": "check" });
+      l2.appendChild(el("input", { type: "checkbox", id: id }));
+      l2.appendChild(el("span", null, "Evet"));
+      ctl.appendChild(l2);
+    } else if (k === "rate") {
+      ctl.className = "ctl rate";
+      ctl.appendChild(el("input", { type: "number", min: "0", step: "any", inputmode: "decimal", id: id, "data-part": "min", placeholder: "en düşük", "aria-label": "en düşük" }));
+      ctl.appendChild(el("span", { "class": "unit" }, "–"));
+      ctl.appendChild(el("input", { type: "number", min: "0", step: "any", inputmode: "decimal", "data-part": "max", placeholder: "en yüksek", "aria-label": "en yüksek" }));
+      var sel = el("select", { "data-part": "currency", "aria-label": "para birimi" });
+      ["TRY", "EUR", "USD"].forEach(function (c) { sel.appendChild(el("option", { value: c }, c === "TRY" ? "TL" : c)); });
+      ctl.appendChild(sel);
+      ctl.appendChild(el("span", { "class": "unit" }, "/ saat, KDV hariç"));
+    } else if (k === "month") {
+      ctl.appendChild(el("input", { type: "month", id: id }));
+    } else if (k === "text") {
+      ctl.appendChild(el("textarea", { id: id, maxlength: "2000", rows: "2" }));
+    } else {
+      var box = el("div", { "class": "suffix" });
+      var attrs = { type: "number", min: "0", step: "any", inputmode: "decimal", id: id };
+      if (k === "percent") attrs.max = "100";
+      box.appendChild(el("input", attrs));
+      if (k === "percent") box.appendChild(el("span", { "class": "unit" }, "%"));
+      if (k === "ratio") box.appendChild(el("span", { "class": "unit" }, "(işçilik = 100)"));
+      ctl.appendChild(box);
+    }
+    wrap.appendChild(ctl);
+    wrap.appendChild(el("p", { "class": "error hidden" }));
+    return wrap;
+  }
+
+  function fill(wrap, v) {
+    if (!v) return;
+    var k = wrap.getAttribute("data-kind");
+    if (k === "choice" || k === "multi") {
+      var vals = v.list || (v.text != null ? [v.text] : []);
+      wrap.querySelectorAll("input").forEach(function (i) { i.checked = vals.indexOf(i.value) >= 0; });
+    } else if (k === "flag") {
+      wrap.querySelector("input").checked = v.num === 1;
+    } else if (k === "rate") {
+      if (v.min != null) wrap.querySelector('[data-part=min]').value = v.min;
+      if (v.max != null) wrap.querySelector('[data-part=max]').value = v.max;
+      if (v.currency) wrap.querySelector('[data-part=currency]').value = v.currency;
+    } else if (k === "month" || k === "text") {
+      wrap.querySelector("input,textarea").value = v.text || "";
+    } else if (v.num != null) {
+      wrap.querySelector("input").value = v.num;
+    }
+  }
+
+  function num(s) {
+    if (s === "" || s == null) return null;
+    var n = Number(String(s).replace(",", "."));
+    return isFinite(n) ? n : NaN;
+  }
+
+  function read(wrap) {
+    var k = wrap.getAttribute("data-kind");
+    if (k === "choice") {
+      var c = wrap.querySelector("input:checked");
+      return c ? { text: c.value } : null;
+    }
+    if (k === "multi") {
+      var l = [].map.call(wrap.querySelectorAll("input:checked"), function (i) { return i.value; });
+      return l.length ? { list: l } : null;
+    }
+    if (k === "flag") return wrap.querySelector("input").checked ? { flag: true } : null;
+    if (k === "rate") {
+      var mn = num(wrap.querySelector('[data-part=min]').value), mx = num(wrap.querySelector('[data-part=max]').value);
+      if (mn == null && mx == null) return null;
+      return { min: mn, max: mx, currency: wrap.querySelector('[data-part=currency]').value };
+    }
+    if (k === "month" || k === "text") {
+      var t = wrap.querySelector("input,textarea").value.trim();
+      return t ? { text: t } : null;
+    }
+    var n = num(wrap.querySelector("input").value);
+    return n == null ? null : { num: n };
+  }
+
+  function answerOf(code) {
+    var w = document.querySelector('.q[data-item="' + code + '"]');
+    return w ? read(w) : null;
+  }
+
+  function applyShowIf() {
+    data.questions.forEach(function (q) {
+      if (!q.show_if) return;
+      var a = answerOf(q.show_if.item);
+      var val = a && (a.text || (a.list && a.list[0]));
+      var visible = !!val && q.show_if["in"].indexOf(val) >= 0;
+      document.querySelector('.q[data-item="' + q.item_code + '"]').classList.toggle("hidden", !visible);
+    });
+  }
+
+  function sharesRates() {
+    var r = document.querySelector('input[name=shares_rates]:checked');
+    return r ? r.value === "yes" : null;
+  }
+
+  function setupSurvey() {
+    var p = data.period;
+    $("title").textContent = data.company_name;
+    $("periodText").textContent = "Dönem: " + fmtDate(p.covers_from) + " – " + fmtDate(p.covers_to) + " (son 3 ay). Son gönderim tarihi: " + fmtDate(p.closes_on) + ".";
+    $("againNote").classList.toggle("hidden", !data.submitted_this_period);
+
+    var form = $("form");
+    form.querySelectorAll(".qs").forEach(function (q) { q.innerHTML = ""; });
+    data.questions.forEach(function (q) {
+      var target = q.section === "C" ? $("rateQs") : form.querySelector('[data-sec="' + q.section + '"] .qs');
+      if (target) target.appendChild(buildQuestion(q));
+    });
+
+    var prev = data.previous;
+    if (prev && prev.items) {
+      Object.keys(prev.items).forEach(function (code) {
+        var w = form.querySelector('.q[data-item="' + code + '"]');
+        if (w) fill(w, prev.items[code]);
+      });
+      if (prev.shares_rates != null) {
+        form.querySelector('input[name=shares_rates][value=' + (prev.shares_rates ? "yes" : "no") + ']').checked = true;
+      }
+      $("prevNote").classList.toggle("hidden", data.submitted_this_period || prev.period_code === p.code);
+    }
+    var toggleRates = function () { $("rateQs").classList.toggle("hidden", sharesRates() !== true); };
+    form.querySelectorAll("input[name=shares_rates]").forEach(function (i) { i.onchange = toggleRates; });
+    toggleRates();
+    form.addEventListener("change", applyShowIf);
+    applyShowIf();
+    show("survey");
+  }
+
+  function validate() {
+    var ok = true, first = null;
+    document.querySelectorAll("#form .q[data-item]").forEach(function (w) {
+      var err = w.querySelector(".error"), text = "";
+      var hidden = w.closest(".hidden");
+      var code = w.getAttribute("data-item");
+      var q = data.questions.filter(function (x) { return x.item_code === code; })[0];
+      if (!hidden) {
+        var v = read(w), k = q.kind;
+        if (q.required && !v) text = "Bu soru zorunlu.";
+        else if (v && "num" in v && (isNaN(v.num) || v.num < 0)) text = "Geçerli, sıfır veya pozitif bir sayı girin.";
+        else if (v && k === "percent" && v.num > 100) text = "Yüzde 0 ile 100 arasında olmalı.";
+        else if (v && k === "rate") {
+          if (isNaN(v.min) || isNaN(v.max) || (v.min != null && v.min < 0) || (v.max != null && v.max < 0)) text = "Geçerli sayılar girin.";
+          else if (v.min != null && v.max != null && v.min > v.max) text = "En düşük değer en yüksek değerden büyük olamaz.";
+        }
+      }
+      err.textContent = text;
+      err.classList.toggle("hidden", !text);
+      w.classList.toggle("bad", !!text);
+      if (text) { ok = false; first = first || w; }
+    });
+    if (sharesRates() === null) {
+      ok = false;
+      $("formErr").textContent = "C bölümünde saat ücretlerini paylaşıp paylaşmayacağınızı seçin.";
+      $("formErr").classList.remove("hidden");
+      first = first || document.querySelector('input[name=shares_rates]');
+    }
+    if (first) first.scrollIntoView({ behavior: "smooth", block: "center" });
+    return ok;
+  }
+
+  function collect() {
+    var items = {};
+    var rates = sharesRates() === true;
+    document.querySelectorAll("#form .q[data-item]").forEach(function (w) {
+      if (w.closest(".hidden")) return;
+      var code = w.getAttribute("data-item");
+      if (!rates && /^C/.test(code)) return;
+      var v = read(w);
+      if (v) items[code] = v;
+    });
+    return items;
+  }
+
+  $("form").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    $("formErr").classList.add("hidden");
+    if (!validate()) return;
+    var btn = $("sendBtn");
+    btn.disabled = true;
+    $("sendStatus").textContent = "Gönderiliyor…";
+    rpc("survey_submit", { p_token: token, p_shares_rates: sharesRates() === true, p_items: collect() })
+      .then(function () { $("sendStatus").textContent = ""; show("done"); })
+      .catch(function (e) {
+        $("sendStatus").textContent = "";
+        $("formErr").textContent = msg(e);
+        $("formErr").classList.remove("hidden");
+      })
+      .then(function () { btn.disabled = false; });
+  });
+
+  $("editAgain").onclick = load;
+
+  function load() {
+    show("loading");
+    rpc("survey_form", { p_token: token }).then(function (d) {
+      data = d;
+      if (!d.period) throw new Error("no_open_period");
+      if (needsConsent()) setupConsent(); else setupSurvey();
+    }).catch(fail);
+  }
+
+  token = readToken();
+  if (!token) fail(new Error("invalid_link")); else load();
+})();
+</script>
+</body>
+</html>
