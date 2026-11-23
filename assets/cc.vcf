@@ -1,0 +1,13 @@
+BEGIN:VCARD
+VERSION:3.0
+N:Cağaloğlu;Çağrı;;;
+FN:Çağrı Cağaloğlu
+ORG:TRIXIMA
+TITLE:Founder
+TEL;TYPE=CELL:+905322372633
+TEL;TYPE=WORK,VOICE:+902322302412
+EMAIL;TYPE=INTERNET,WORK:cagri@trixima.com
+URL:https://trixima.com
+ADR;TYPE=WORK:;;Bahçelievler Mh. 1831/14 Sk. No:12 Tower D:9;Karşıyaka;İzmir;;Türkiye
+X-SOCIALPROFILE;TYPE=linkedin:https://www.linkedin.com/in/cagricc
+END:VCARD
